@@ -115,7 +115,7 @@ fun MemoryScreen(viewModel: MemoryViewModel) {
                     letterSpacing = 1.5.sp
                 )
                 Text(
-                    text = "STARK ENCRYPTED LOCAL ENGRAMS",
+                    text = "OMX NEURAL VAULT // LOCAL ENGRAMS",
                     color = TextSecondary,
                     fontSize = 10.sp,
                     fontFamily = HudMonospace,
@@ -281,7 +281,7 @@ fun CyberMemoryCard(
 
                     Text(
                         text = "PRIORITY: ${memory.importance}/10",
-                        color = if (memory.importance >= 8) StarkGold else TextMuted,
+                        color = if (memory.importance >= 8) OmxGold else TextMuted,
                         fontSize = 9.5.sp,
                         fontFamily = HudMonospace,
                         fontWeight = FontWeight.SemiBold

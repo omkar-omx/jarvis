@@ -80,14 +80,14 @@ fun WelcomeScreen(onSetupComplete: () -> Unit) {
                 )
                 Text(
                     text = "created by ( OmX Infinity - Omkar )",
-                    color = StarkGold,
+                    color = OmxGold,
                     fontSize = 10.sp,
                     fontFamily = HudMonospace,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.5.sp
                 )
                 Text(
-                    text = "STARK INDUSTRIES // NEURAL INITIALIZATION",
+                    text = "OMX INFINITY // NEURAL INITIALIZATION",
                     color = TextSecondary,
                     fontSize = 9.sp,
                     fontFamily = HudMonospace,

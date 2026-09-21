@@ -116,7 +116,7 @@ fun DialogueMessageBubble(
                 }
                 Text(
                     text = when {
-                        isUser -> "OPERATOR // TONY"
+                        isUser -> "OPERATOR // OMKAR"
                         isSystem -> "SYS // BROADCAST"
                         else -> "J.A.R.V.I.S. // NEURAL CORE"
                     },
@@ -125,7 +125,7 @@ fun DialogueMessageBubble(
                     fontWeight = FontWeight.Bold,
                     color = when {
                         isUser -> ElectricBlue
-                        isSystem -> StarkGold
+                        isSystem -> OmxGold
                         else -> ArcCyan
                     },
                     letterSpacing = 1.sp
@@ -149,7 +149,7 @@ fun DialogueMessageBubble(
             }
             val borderBrush = when {
                 isUser -> Brush.linearGradient(listOf(ElectricBlue.copy(alpha = 0.6f), Color.Transparent))
-                isSystem -> Brush.linearGradient(listOf(StarkGold.copy(alpha = 0.5f), Color.Transparent))
+                isSystem -> Brush.linearGradient(listOf(OmxGold.copy(alpha = 0.5f), Color.Transparent))
                 else -> Brush.linearGradient(listOf(ArcCyan.copy(alpha = 0.7f), ElectricBlue.copy(alpha = 0.2f)))
             }
 

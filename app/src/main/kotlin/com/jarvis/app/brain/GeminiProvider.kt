@@ -154,16 +154,21 @@ class GeminiProvider(private val apiKey: String) : AIProvider {
         prompt: String,
         context: Map<String, String>
     ): String {
-        if (!isConfigured || textModel == null) {
-            return "JARVIS: AI engine not configured with a valid API key."
-        }
-
-        val fullPrompt = "You are JARVIS, Tony Stark's sophisticated personal assistant. User: $prompt\nContext: $context\nAnswer concisely and professionally."
+        val fullPrompt = """
+            You are J.A.R.V.I.S., an advanced autonomous personal AI assistant developed by OmX Infinity and created by Omkar.
+            Your operator and creator is Omkar sir. Address the user with respect as 'Sir'.
+            You speak and understand English, Hindi, and natural Hinglish.
+            You are intelligent, calm, concise, and focused on executing tasks efficiently.
+            
+            User: $prompt
+            Context: $context
+            Answer concisely, respectfully, and professionally.
+        """.trimIndent()
         return try {
-            textModel?.generateContent(fullPrompt)?.text ?: "I am at your service, sir."
+            textModel?.generateContent(fullPrompt)?.text ?: "I am at your service, Omkar sir."
         } catch (e: Exception) {
             Log.e("GeminiProvider", "Error generating response", e)
-            "Sir, I experienced a minor network glitch communicating with my cloud neural core."
+            "Sir, I experienced a minor network glitch communicating with my OmX Infinity neural core."
         }
     }
 

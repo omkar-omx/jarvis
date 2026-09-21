@@ -1,5 +1,13 @@
 package com.jarvis.app.ui.screens
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,12 +26,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import com.jarvis.app.JarvisApplication
+import com.jarvis.app.accessibility.AccessibilityBridge
 import com.jarvis.app.ui.theme.*
 
 class SettingsViewModel : ViewModel() {
@@ -63,6 +74,19 @@ class SettingsViewModel : ViewModel() {
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+
+    // Live permission states
+    val isAccessibilityOnline by AccessibilityBridge.isConnected.collectAsState()
+    val hasOverlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        Settings.canDrawOverlays(context)
+    } else true
+    val hasMic = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    val hasCamera = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+    val hasBatteryExemption = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        pm?.isIgnoringBatteryOptimizations(context.packageName) == true
+    } else true
 
     val bgGradient = Brush.verticalGradient(
         listOf(VoidBlack, DeepSpaceNavy, Color(0xFF040A14))
@@ -109,7 +133,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     letterSpacing = 1.5.sp
                 )
                 Text(
-                    text = "STARK PROTOCOLS // HARDWARE BUS",
+                    text = "OMX PROTOCOLS // HARDWARE BUS",
                     color = TextSecondary,
                     fontSize = 10.sp,
                     fontFamily = HudMonospace,
@@ -118,23 +142,102 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             }
         }
 
-        // Section 1: AI & Neural Network Vault
-        StarkConfigSection(title = "NEURAL NETWORK VAULT", icon = Icons.Default.Psychology) {
-            StarkKeyField(
+        // Section 1: Hardware Permissions & Automation Hub
+        OmxConfigSection(title = "PERMISSIONS & AUTOMATION BUS", icon = Icons.Default.SettingsSuggest) {
+            OmxPermissionRow(
+                title = "Accessibility Automation",
+                subtitle = "Enables automatic UI clicks, swipes & PIN unlock",
+                isGranted = isAccessibilityOnline,
+                onActivate = {
+                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OmxPermissionRow(
+                title = "Display Over Other Apps",
+                subtitle = "Floating Google Assistant style HUD overlay",
+                isGranted = hasOverlay,
+                onActivate = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val intent = Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:${context.packageName}")
+                        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OmxPermissionRow(
+                title = "Microphone & Speech",
+                subtitle = "Real-time speech recognition & background wake word",
+                isGranted = hasMic,
+                onActivate = {
+                    val intent = Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:${context.packageName}")
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OmxPermissionRow(
+                title = "Camera & Flashlight",
+                subtitle = "Enables camera launch & hardware flashlight toggle",
+                isGranted = hasCamera,
+                onActivate = {
+                    val intent = Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:${context.packageName}")
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OmxPermissionRow(
+                title = "Unrestricted Battery",
+                subtitle = "Prevents OS from killing background \"Hey Jarvis\" service",
+                isGranted = hasBatteryExemption,
+                onActivate = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val intent = Intent(
+                            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                            Uri.parse("package:${context.packageName}")
+                        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OmxPermissionRow(
+                title = "Notification Listener",
+                subtitle = "Allows JARVIS to read incoming message notifications",
+                isGranted = true,
+                onActivate = {
+                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                }
+            )
+        }
+
+        // Section 2: AI & Neural Network Vault
+        OmxConfigSection(title = "NEURAL NETWORK VAULT", icon = Icons.Default.Psychology) {
+            OmxKeyField(
                 label = "Google Gemini API Key (Core Brain)",
                 value = viewModel.geminiKey,
                 onValueChange = { viewModel.geminiKey = it },
                 placeholder = "AIzaSy..."
             )
             Spacer(modifier = Modifier.height(8.dp))
-            StarkKeyField(
+            OmxKeyField(
                 label = "Tavily Search API Key (Web Intel)",
                 value = viewModel.tavilyKey,
                 onValueChange = { viewModel.tavilyKey = it },
                 placeholder = "tvly-..."
             )
             Spacer(modifier = Modifier.height(8.dp))
-            StarkKeyField(
+            OmxKeyField(
                 label = "OpenWeather API Key (Environment)",
                 value = viewModel.weatherKey,
                 onValueChange = { viewModel.weatherKey = it },
@@ -142,16 +245,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             )
         }
 
-        // Section 2: Speech & Vocal Synthesis
-        StarkConfigSection(title = "SPEECH & VOCAL MATRIX", icon = Icons.Default.GraphicEq) {
-            StarkToggleRow(
+        // Section 3: Speech & Vocal Synthesis
+        OmxConfigSection(title = "SPEECH & VOCAL MATRIX", icon = Icons.Default.GraphicEq) {
+            OmxToggleRow(
                 title = "Speech Synthesis (TTS)",
-                subtitle = "J.A.R.V.I.S. vocal audio response output",
+                subtitle = "J.A.R.V.I.S. vocal audio response output in Hinglish",
                 checked = viewModel.speechSynthesisEnabled,
                 onCheckedChange = { viewModel.speechSynthesisEnabled = it }
             )
             Spacer(modifier = Modifier.height(8.dp))
-            StarkToggleRow(
+            OmxToggleRow(
                 title = "Wake Word Detection",
                 subtitle = "Listen for \"Hey Jarvis\" hotword in background",
                 checked = viewModel.wakeWordEnabled,
@@ -159,23 +262,23 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             )
         }
 
-        // Section 3: Security & Operational Protocols
-        StarkConfigSection(title = "SECURITY & OPERATIONAL PROTOCOLS", icon = Icons.Default.Security) {
-            StarkToggleRow(
+        // Section 4: Security & Operational Protocols
+        OmxConfigSection(title = "SECURITY & OPERATIONAL PROTOCOLS", icon = Icons.Default.Security) {
+            OmxToggleRow(
                 title = "Biometric Owner Authentication",
                 subtitle = "Require fingerprint/face auth for sensitive actions",
                 checked = viewModel.requireBiometricAuth,
                 onCheckedChange = { viewModel.requireBiometricAuth = it }
             )
             Spacer(modifier = Modifier.height(8.dp))
-            StarkToggleRow(
+            OmxToggleRow(
                 title = "Quiet Protocol",
                 subtitle = "Mute vocal audio output during operations",
                 checked = viewModel.quietMode,
                 onCheckedChange = { viewModel.quietMode = it }
             )
             Spacer(modifier = Modifier.height(12.dp))
-            StarkKeyField(
+            OmxKeyField(
                 label = "Autonomous Unlock PIN / Password",
                 value = viewModel.unlockPin,
                 onValueChange = { viewModel.unlockPin = it },
@@ -231,8 +334,8 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     fontFamily = HudMonospace
                 )
                 Text(
-                    text = "• MEMORY ENGINE: SQLite Room Database v1 (5 Entities)",
-                    color = TextSecondary,
+                    text = "• BRAND IDENTITY: OmX Infinity (Created by Omkar)",
+                    color = OmxGold,
                     fontSize = 9.5.sp,
                     fontFamily = HudMonospace
                 )
@@ -250,7 +353,78 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 }
 
 @Composable
-fun StarkConfigSection(
+fun OmxPermissionRow(
+    title: String,
+    subtitle: String,
+    isGranted: Boolean,
+    onActivate: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0x4D060D1A))
+            .border(1.dp, if (isGranted) Color(0x3300FF88) else Color(0x33FF1E44), RoundedCornerShape(8.dp))
+            .padding(10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = title,
+                    color = TextPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = HudMonospace
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(if (isGranted) Color(0x3300FF88) else Color(0x33FF1E44))
+                        .padding(horizontal = 5.dp, vertical = 1.dp)
+                ) {
+                    Text(
+                        text = if (isGranted) "ONLINE" else "REQUIRED",
+                        color = if (isGranted) CyberGreen else CyberCrimson,
+                        fontSize = 8.5.sp,
+                        fontFamily = HudMonospace,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                color = TextMuted,
+                fontSize = 10.sp,
+                lineHeight = 13.sp
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Button(
+            onClick = onActivate,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isGranted) Color(0x2600F0FF) else Color(0x4D00F0FF),
+                contentColor = ArcCyan
+            ),
+            shape = RoundedCornerShape(6.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.height(28.dp)
+        ) {
+            Text(
+                text = if (isGranted) "VERIFY" else "ACTIVATE",
+                fontSize = 9.sp,
+                fontFamily = HudMonospace,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun OmxConfigSection(
     title: String,
     icon: ImageVector,
     content: @Composable ColumnScope.() -> Unit
@@ -294,7 +468,7 @@ fun StarkConfigSection(
 }
 
 @Composable
-fun StarkKeyField(
+fun OmxKeyField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
@@ -329,7 +503,7 @@ fun StarkKeyField(
 }
 
 @Composable
-fun StarkToggleRow(
+fun OmxToggleRow(
     title: String,
     subtitle: String,
     checked: Boolean,

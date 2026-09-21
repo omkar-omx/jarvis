@@ -26,7 +26,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Animated Tony Stark Arc Reactor Core Component.
+ * Animated OmX Infinity Arc Core Component.
  * Acts as the premier visual indicator of J.A.R.V.I.S.'s operational status,
  * voice listening state, and thinking/automation activity.
  */
@@ -108,7 +108,7 @@ fun ArcReactorWidget(
     val primaryColor = when {
         agentState == AgentState.EMERGENCY_STOPPED -> CyberCrimson
         isListening -> CyberGreen
-        agentState == AgentState.EXECUTING || agentState == AgentState.PLANNING -> StarkGold
+        agentState == AgentState.EXECUTING || agentState == AgentState.PLANNING -> OmxGold
         else -> ArcCyan
     }
 
@@ -276,7 +276,7 @@ fun ArcReactorWidget(
             )
         }
 
-        // 6. Central Stark Arc Identifier
+        // 6. Central Arc Core Identifier
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center

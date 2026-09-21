@@ -46,23 +46,117 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             _agentState.value = AgentState.PLANNING
 
-            val response = try {
-                val provider = com.jarvis.app.brain.BrainManager.activeProvider
-                provider.generateResponse(command)
+            val context = com.jarvis.app.JarvisApplication.instance
+            var finalResponse = ""
+
+            try {
+                // 1. Native Device Action Dispatcher (App launch, flashlight, volume, screenshot, navigation, unlock)
+                val dispatchResult = com.jarvis.app.device.DeviceActionDispatcher.tryDispatch(command, context)
+                if (dispatchResult != null && dispatchResult.handled) {
+                    finalResponse = dispatchResult.feedback
+                }
+
+                // 2. Memory Storage ("Remember that...", "Yaad rakhna...")
+                if (finalResponse.isBlank()) {
+                    val lower = command.lowercase().trim()
+                    if (lower.startsWith("remember that ") || lower.startsWith("remember ") || lower.startsWith("yaad rakhna ki ") || lower.startsWith("yaad rakh ")) {
+                        val fact = command
+                            .replace("remember that ", "", ignoreCase = true)
+                            .replace("remember ", "", ignoreCase = true)
+                            .replace("yaad rakhna ki ", "", ignoreCase = true)
+                            .replace("yaad rakh ", "", ignoreCase = true)
+                            .trim()
+                        com.jarvis.app.JarvisApplication.memoryRepository.saveMemory(
+                            com.jarvis.app.memory.entities.MemoryEntity(
+                                content = fact,
+                                category = "user_preference",
+                                importance = 8
+                            )
+                        )
+                        finalResponse = "Engram stored in OmX Neural Vault: \"$fact\". I will remember this, sir."
+                    }
+                }
+
+                // 3. Memory Recall ("What is my...", "Mera ... kya hai", "Do you remember...")
+                if (finalResponse.isBlank()) {
+                    val lower = command.lowercase().trim()
+                    if (lower.startsWith("what is my ") || lower.startsWith("what are my ") || lower.contains("do you remember") || lower.contains("kya yaad hai")) {
+                        val query = lower
+                            .replace("what is my ", "")
+                            .replace("what are my ", "")
+                            .replace("do you remember ", "")
+                            .replace("kya yaad hai ", "")
+                            .trim()
+                        val memories = com.jarvis.app.JarvisApplication.memoryRepository.searchMemories(query)
+                        if (memories.isNotEmpty()) {
+                            finalResponse = "According to OmX Neural Engrams:\n" + memories.take(3).joinToString("\n") { "• " + it.content }
+                        }
+                    }
+                }
+
+                // 4. Weather Sensor Query ("weather in ...", "mausam kaisa hai")
+                if (finalResponse.isBlank()) {
+                    val lower = command.lowercase().trim()
+                    if (lower.contains("weather") || lower.contains("mausam") || lower.contains("temperature")) {
+                        val weatherKey = com.jarvis.app.JarvisApplication.secureStorage.getApiKey("weather") ?: ""
+                        if (weatherKey.isNotBlank()) {
+                            val city = extractCity(command) ?: "Delhi"
+                            val weatherContext = com.jarvis.app.context.WeatherContext(weatherKey)
+                            finalResponse = weatherContext.getCurrentWeather(city)
+                        } else {
+                            finalResponse = "Weather sensor protocol is unconfigured, sir. Please configure OpenWeather in OmX Protocols."
+                        }
+                    }
+                }
+
+                // 5. Tactical Web Intel Search (Tavily)
+                if (finalResponse.isBlank()) {
+                    val lower = command.lowercase().trim()
+                    val isSearch = lower.startsWith("search ") || lower.startsWith("find ") || lower.contains("latest news") || lower.contains("search for")
+                    val tavilyKey = com.jarvis.app.JarvisApplication.secureStorage.getApiKey("tavily") ?: ""
+                    if (isSearch && tavilyKey.isNotBlank()) {
+                        val searchQuery = command
+                            .replace("search for ", "", ignoreCase = true)
+                            .replace("search ", "", ignoreCase = true)
+                            .trim()
+                        val tavily = com.jarvis.app.web.TavilySearchProvider(tavilyKey)
+                        val results = tavily.search(searchQuery, 3)
+                        if (results.isNotEmpty()) {
+                            val summary = results.joinToString("\n\n") { "${it.title}:\n${it.snippet}" }
+                            finalResponse = "OmX Tactical Web Intel:\n$summary"
+                        }
+                    }
+                }
+
+                // 6. Cloud Neural Core Reasoning (Gemini 1.5 Flash)
+                if (finalResponse.isBlank()) {
+                    val provider = com.jarvis.app.brain.BrainManager.activeProvider
+                    finalResponse = provider.generateResponse(command)
+                }
+
             } catch (e: Exception) {
-                "Sir, I encountered an issue: ${e.message}"
+                finalResponse = "Sir, an anomaly was encountered: ${e.message}"
             }
 
             val newMessages = _messages.value.toMutableList()
-            newMessages.add("jarvis" to response)
+            newMessages.add("jarvis" to finalResponse)
             _messages.value = newMessages
             _agentState.value = AgentState.IDLE
 
-            // Real TTS Voice Synthesis with Indian English/Hinglish pronunciation
+            // Real TTS Vocalization with Hinglish pronunciation
             try {
-                com.jarvis.app.JarvisApplication.ttsEngine.speak(response)
+                com.jarvis.app.JarvisApplication.ttsEngine.speak(finalResponse)
             } catch (_: Exception) {}
         }
+    }
+
+    private fun extractCity(cmd: String): String? {
+        val words = cmd.split(" ")
+        val inIndex = words.indexOfFirst { it.equals("in", ignoreCase = true) }
+        if (inIndex != -1 && inIndex + 1 < words.size) {
+            return words.subList(inIndex + 1, words.size).joinToString(" ").replace("?", "").trim()
+        }
+        return null
     }
 
     fun toggleListening() {
@@ -152,7 +246,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 // Tactical state badge below Arc Reactor
                 Text(
                     text = when (agentState) {
-                        AgentState.IDLE -> if (isListening) "VOICE RECOGNITION ACTIVE" else "STARK NEURAL CORE // STANDBY"
+                        AgentState.IDLE -> if (isListening) "VOICE RECOGNITION ACTIVE" else "OMX NEURAL CORE // STANDBY"
                         AgentState.PLANNING -> "CALCULATING TACTICAL PATH..."
                         AgentState.EXECUTING -> "EXECUTING AUTOMATED ACTIONS..."
                         AgentState.OBSERVING -> "OBSERVING SCREEN MATRIX..."
@@ -162,7 +256,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     },
                     color = when (agentState) {
                         AgentState.EMERGENCY_STOPPED -> CyberCrimson
-                        AgentState.EXECUTING, AgentState.PLANNING -> StarkGold
+                        AgentState.EXECUTING, AgentState.PLANNING -> OmxGold
                         else -> if (isListening) CyberGreen else ArcCyan
                     },
                     fontFamily = HudMonospace,

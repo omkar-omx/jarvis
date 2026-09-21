@@ -2,7 +2,7 @@ package com.jarvis.app.voice
 
 /**
  * Configuration options for the Voice Engine (STT and TTS).
- * Configured specifically for Indian English & Hinglish pronunciation with a deep Stark-like tone.
+ * Configured specifically for Indian English & Hinglish pronunciation with a calm, authoritative OmX AI tone.
  *
  * @property language BCP 47 language tag (e.g., "en-IN" for Indian English & Hinglish, "hi-IN" for Hindi).
  * @property ttsSpeed Speech rate for text-to-speech (1.0f = normal).

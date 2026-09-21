@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 // ==========================================
-// J.A.R.V.I.S. STARK INDUSTRIES HUD PALETTE
+// J.A.R.V.I.S. OMX INFINITY HUD PALETTE
 // ==========================================
 
 // Deep Void Backgrounds
@@ -21,8 +21,8 @@ val ArcCyanSubtle = Color(0x2600F0FF)
 val ElectricBlue = Color(0xFF0077FE)
 val NeonCyanBright = Color(0xFF5DF2FF)
 
-// Stark Amber / Core Warmth
-val StarkGold = Color(0xFFFFB703)
+// OmX Amber / Core Warmth
+val OmxGold = Color(0xFFFFB703)
 val CoreAmber = Color(0xFFFB8500)
 val CoreOrangeGlow = Color(0x66FB8500)
 
@@ -65,7 +65,7 @@ val JarvisSurfaceVariant = GlassSurfaceVariant
 val JarvisOnSurface = TextPrimary
 val JarvisOnSurfaceVariant = TextSecondary
 val JarvisSuccess = CyberGreen
-val JarvisWarning = StarkGold
+val JarvisWarning = OmxGold
 val JarvisError = CyberCrimson
 val JarvisOnPrimary = Color.Black
 val JarvisPrimaryContainer = Color(0xFF00384D)
