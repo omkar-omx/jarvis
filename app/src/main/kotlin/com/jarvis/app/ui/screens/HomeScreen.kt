@@ -66,12 +66,10 @@ class HomeViewModel : ViewModel() {
                             .replace("yaad rakhna ki ", "", ignoreCase = true)
                             .replace("yaad rakh ", "", ignoreCase = true)
                             .trim()
-                        com.jarvis.app.JarvisApplication.memoryRepository.saveMemory(
-                            com.jarvis.app.memory.entities.MemoryEntity(
-                                content = fact,
-                                category = "user_preference",
-                                importance = 8
-                            )
+                        com.jarvis.app.JarvisApplication.memoryRepository.remember(
+                            content = fact,
+                            category = "user_preference",
+                            importance = 8
                         )
                         finalResponse = "Engram stored in OmX Neural Vault: \"$fact\". I will remember this, sir."
                     }
