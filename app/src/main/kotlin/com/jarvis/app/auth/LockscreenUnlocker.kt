@@ -40,7 +40,7 @@ object LockscreenUnlocker {
             return false
         }
 
-        val service = AccessibilityBridge.serviceInstance
+        val service = AccessibilityBridge.getService()
         if (service == null) {
             Log.w(TAG, "Accessibility Service is offline. Cannot dispatch unlock gestures.")
             return false
@@ -64,7 +64,7 @@ object LockscreenUnlocker {
             val startY = displayMetrics.heightPixels * 0.85f
             val endY = displayMetrics.heightPixels * 0.25f
 
-            AccessibilityBridge.dispatchSwipe(startX, startY, startX, endY, 300)
+            AccessibilityBridge.performSwipe(startX, startY, startX, endY, 300L)
             delay(800)
 
             // 3. Enter PIN digits by searching for digit nodes on keyguard

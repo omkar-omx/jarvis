@@ -42,6 +42,16 @@ object AccessibilityBridge {
      */
     fun getService(): JarvisAccessibilityService? = service
 
+    val serviceInstance: JarvisAccessibilityService? get() = service
+
+    suspend fun dispatchSwipe(
+        startX: Float,
+        startY: Float,
+        endX: Float,
+        endY: Float,
+        durationMs: Long = 300L
+    ): Boolean = performSwipe(startX, startY, endX, endY, durationMs)
+
     /**
      * Updates the latest cached [ScreenInfo] in the state flow.
      */

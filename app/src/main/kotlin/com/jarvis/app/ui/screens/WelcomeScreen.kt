@@ -79,9 +79,17 @@ fun WelcomeScreen(onSetupComplete: () -> Unit) {
                     letterSpacing = 2.sp
                 )
                 Text(
+                    text = "created by ( OmX Infinity - Omkar )",
+                    color = StarkGold,
+                    fontSize = 10.sp,
+                    fontFamily = HudMonospace,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.5.sp
+                )
+                Text(
                     text = "STARK INDUSTRIES // NEURAL INITIALIZATION",
                     color = TextSecondary,
-                    fontSize = 10.sp,
+                    fontSize = 9.sp,
                     fontFamily = HudMonospace,
                     letterSpacing = 1.sp
                 )

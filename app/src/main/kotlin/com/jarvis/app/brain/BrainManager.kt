@@ -14,6 +14,7 @@ object BrainManager : AIProvider {
 
     private var _activeProvider: AIProvider = LocalFallbackProvider()
     val activeProvider: AIProvider get() = _activeProvider
+    fun getActiveProvider(): AIProvider = _activeProvider
 
     override val name: String get() = _activeProvider.name
     override val isConfigured: Boolean get() = _activeProvider.isConfigured
