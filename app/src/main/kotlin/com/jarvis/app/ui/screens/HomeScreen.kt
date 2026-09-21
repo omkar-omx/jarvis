@@ -47,7 +47,7 @@ class HomeViewModel : ViewModel() {
             _agentState.value = AgentState.PLANNING
 
             val response = try {
-                val provider = com.jarvis.app.brain.BrainManager.getActiveProvider()
+                val provider = com.jarvis.app.brain.BrainManager.activeProvider
                 provider.generateResponse(command)
             } catch (e: Exception) {
                 "Sir, I encountered an issue: ${e.message}"
