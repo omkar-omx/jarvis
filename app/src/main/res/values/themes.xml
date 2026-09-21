@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme using Material NoActionBar for Jetpack Compose -->
+    <style name="Theme.Jarvis" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/jarvis_background</item>
+        <item name="android:navigationBarColor">@color/jarvis_background</item>
+        <item name="android:windowBackground">@color/jarvis_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorPrimary">@color/jarvis_primary</item>
+        <item name="android:colorPrimaryDark">@color/jarvis_background</item>
+        <item name="android:colorAccent">@color/jarvis_accent</item>
+        <item name="android:colorControlActivated">@color/jarvis_accent</item>
+    </style>
+</resources>

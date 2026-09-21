@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core Dark Theme JARVIS Palette -->
+    <color name="jarvis_primary">#00BCD4</color>
+    <color name="jarvis_background">#0A0E1A</color>
+    <color name="jarvis_surface">#141B2D</color>
+    <color name="jarvis_accent">#00E5FF</color>
+    <color name="jarvis_warning">#FF6F00</color>
+    <color name="jarvis_error">#FF1744</color>
+    <color name="jarvis_success">#00E676</color>
+
+    <!-- Supplemental Theme Colors -->
+    <color name="jarvis_on_primary">#000000</color>
+    <color name="jarvis_primary_container">#004D5A</color>
+    <color name="jarvis_on_primary_container">#E0F7FA</color>
+
+    <color name="jarvis_on_background">#E6ECF5</color>
+    <color name="jarvis_on_surface">#E6ECF5</color>
+    <color name="jarvis_surface_variant">#1D2640</color>
+    <color name="jarvis_on_surface_variant">#A5B4CB</color>
+
+    <color name="jarvis_card_background">#182035</color>
+    <color name="jarvis_card_border">#24304F</color>
+    <color name="jarvis_outline">#3D4D6B</color>
+
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.75"
+        android:scaleY="0.75">
+
+        <!-- Outer Hexagonal Frame -->
+        <path
+            android:strokeColor="#00BCD4"
+            android:strokeWidth="2.5"
+            android:strokeLineJoin="round"
+            android:pathData="M 54,10 L 92.1,32 L 92.1,76 L 54,98 L 15.9,76 L 15.9,32 Z" />
+
+        <!-- Outer Concentric Ring -->
+        <path
+            android:strokeColor="#00E5FF"
+            android:strokeWidth="2"
+            android:pathData="M 54,18 A 36,36 0 1,0 54,90 A 36,36 0 1,0 54,18" />
+
+        <!-- Inner Ring -->
+        <path
+            android:strokeColor="#00BCD4"
+            android:strokeWidth="2"
+            android:pathData="M 54,30 A 24,24 0 1,0 54,78 A 24,24 0 1,0 54,30" />
+
+        <!-- Arc Reactor Coils -->
+        <path
+            android:strokeColor="#00E5FF"
+            android:strokeWidth="3.5"
+            android:strokeLineCap="round"
+            android:pathData="M 78,54 L 90,54
+                              M 71,71 L 79.5,79.5
+                              M 54,78 L 54,90
+                              M 37,71 L 28.5,79.5
+                              M 30,54 L 18,54
+                              M 37,37 L 28.5,28.5
+                              M 54,30 L 54,18
+                              M 71,37 L 79.5,28.5" />
+
+        <!-- Arc Reactor Secondary Ticks -->
+        <path
+            android:strokeColor="#80DEEA"
+            android:strokeWidth="1.5"
+            android:strokeLineCap="round"
+            android:pathData="M 76.1,63.2 L 87.2,67.8
+                              M 63.2,76.1 L 67.8,87.2
+                              M 44.8,76.1 L 40.2,87.2
+                              M 31.9,63.2 L 20.8,67.8
+                              M 31.9,44.8 L 20.8,40.2
+                              M 44.8,31.9 L 40.2,20.8
+                              M 63.2,31.9 L 67.8,20.8
+                              M 76.1,44.8 L 87.2,40.2" />
+
+        <!-- Arc Reactor Center Triangle Core -->
+        <path
+            android:fillColor="#3300E5FF"
+            android:strokeColor="#00E5FF"
+            android:strokeWidth="2"
+            android:strokeLineJoin="round"
+            android:pathData="M 42,47 L 66,47 L 54,68 Z" />
+
+        <!-- Center Core Dot -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M 54,51 A 3,3 0 1,0 54,57 A 3,3 0 1,0 54,51" />
+
+    </group>
+
+</vector>
