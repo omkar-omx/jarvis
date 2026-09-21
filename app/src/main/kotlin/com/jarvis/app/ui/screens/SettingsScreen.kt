@@ -39,6 +39,7 @@ import com.jarvis.app.ui.theme.*
 
 class SettingsViewModel : ViewModel() {
     var geminiKey by mutableStateOf(JarvisApplication.secureStorage.getApiKey("gemini") ?: "")
+    var openAiKey by mutableStateOf(JarvisApplication.secureStorage.getApiKey("openai") ?: "")
     var tavilyKey by mutableStateOf(JarvisApplication.secureStorage.getApiKey("tavily") ?: "")
     var weatherKey by mutableStateOf(JarvisApplication.secureStorage.getApiKey("weather") ?: "")
 
@@ -54,19 +55,35 @@ class SettingsViewModel : ViewModel() {
 
     fun saveAll() {
         if (geminiKey.isNotBlank()) JarvisApplication.secureStorage.saveApiKey(geminiKey.trim(), "gemini")
+        if (openAiKey.isNotBlank()) JarvisApplication.secureStorage.saveApiKey(openAiKey.trim(), "openai")
         if (tavilyKey.isNotBlank()) JarvisApplication.secureStorage.saveApiKey(tavilyKey.trim(), "tavily")
         if (weatherKey.isNotBlank()) JarvisApplication.secureStorage.saveApiKey(weatherKey.trim(), "weather")
         if (unlockPin.isNotBlank()) com.jarvis.app.auth.LockscreenUnlocker.saveUnlockPin(unlockPin.trim())
 
-        // Reconfigure active provider
+        // Determine preferred provider based on keys
+        val chosenProvider = if (openAiKey.isNotBlank() && geminiKey.isBlank()) "OpenAI" else "Gemini"
+        val chosenKey = if (chosenProvider == "OpenAI") openAiKey.trim() else geminiKey.trim()
+
         val currentSettings = JarvisApplication.settingsRepository.settingsFlow.value
         JarvisApplication.settingsRepository.saveSettings(
             currentSettings.copy(
-                aiProviderName = "Gemini",
-                aiApiKey = geminiKey.trim(),
+                aiProviderName = chosenProvider,
+                aiApiKey = chosenKey,
+                openAiApiKey = openAiKey.trim(),
                 isSetupComplete = true
             )
         )
+
+        // Reconfigure BrainManager immediately
+        if (chosenKey.isNotBlank()) {
+            com.jarvis.app.brain.BrainManager.configureProvider(
+                com.jarvis.app.brain.AIProviderConfig(
+                    providerName = chosenProvider,
+                    apiKey = chosenKey,
+                    modelName = if (chosenProvider == "OpenAI") "gpt-4o-mini" else "gemini-1.5-flash"
+                )
+            )
+        }
         isSavedToastVisible = true
     }
 }
@@ -75,18 +92,56 @@ class SettingsViewModel : ViewModel() {
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
 
-    // Live permission states
-    val isAccessibilityOnline by AccessibilityBridge.isConnected.collectAsState()
-    val hasOverlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        Settings.canDrawOverlays(context)
-    } else true
-    val hasMic = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-    val hasCamera = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    // ── Live-refresh tick on every RESUME (user comes back from settings) ──
+    var refreshTick by remember { mutableStateOf(0) }
+    androidx.compose.runtime.DisposableEffect(lifecycle) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) refreshTick++
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+
+    // Live permission states — re-evaluated whenever refreshTick changes
+    val isAccessibilityOnline = remember(refreshTick) {
+        if (AccessibilityBridge.isConnected.value) return@remember true
+        try {
+            val enabledServices = Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            ) ?: ""
+            enabledServices.contains(context.packageName, ignoreCase = true)
+        } catch (_: Exception) {
+            false
+        }
+    }
+    val hasOverlay = remember(refreshTick) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            Settings.canDrawOverlays(context)
+        else true
+    }
+    val hasMic = remember(refreshTick) {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    }
+    val hasCamera = remember(refreshTick) {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    }
     val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-    val hasBatteryExemption = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        pm?.isIgnoringBatteryOptimizations(context.packageName) == true
-    } else true
+    val hasBatteryExemption = remember(refreshTick) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            pm?.isIgnoringBatteryOptimizations(context.packageName) == true
+        else true
+    }
+    val hasNotificationListener = remember(refreshTick) {
+        try {
+            val flat = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners") ?: ""
+            flat.contains(context.packageName)
+        } catch (_: Exception) {
+            false
+        }
+    }
 
     val bgGradient = Brush.verticalGradient(
         listOf(VoidBlack, DeepSpaceNavy, Color(0xFF040A14))
@@ -213,7 +268,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             OmxPermissionRow(
                 title = "Notification Listener",
                 subtitle = "Allows JARVIS to read incoming message notifications",
-                isGranted = true,
+                isGranted = hasNotificationListener,
                 onActivate = {
                     val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(intent)
@@ -228,6 +283,13 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 value = viewModel.geminiKey,
                 onValueChange = { viewModel.geminiKey = it },
                 placeholder = "AIzaSy..."
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OmxKeyField(
+                label = "OpenAI / ChatGPT API Key (Alternative Brain)",
+                value = viewModel.openAiKey,
+                onValueChange = { viewModel.openAiKey = it },
+                placeholder = "sk-..."
             )
             Spacer(modifier = Modifier.height(8.dp))
             OmxKeyField(

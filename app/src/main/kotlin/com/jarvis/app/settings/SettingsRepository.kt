@@ -43,10 +43,15 @@ class SettingsRepository(context: Context) {
 
         return JarvisSettings(
             isSetupComplete = prefs.getBoolean(KEY_IS_SETUP_COMPLETE, false),
+            userName = prefs.getString(KEY_USER_NAME, "") ?: "",
+            fullName = prefs.getString(KEY_FULL_NAME, "") ?: "",
+            assistantName = prefs.getString(KEY_ASSISTANT_NAME, "Jarvis") ?: "Jarvis",
             aiProviderName = prefs.getString(KEY_AI_PROVIDER_NAME, JarvisSettings.DEFAULT_AI_PROVIDER)
                 ?: JarvisSettings.DEFAULT_AI_PROVIDER,
             aiApiKey = apiKey,
             aiModelName = prefs.getString(KEY_AI_MODEL_NAME, "") ?: "",
+            openAiApiKey = prefs.getString(KEY_OPENAI_API_KEY, "") ?: "",
+            selectedVoice = prefs.getString(KEY_SELECTED_VOICE, "en-IN-Wavenet-C") ?: "en-IN-Wavenet-C",
             voiceLanguage = prefs.getString(KEY_VOICE_LANGUAGE, JarvisSettings.DEFAULT_VOICE_LANGUAGE)
                 ?: JarvisSettings.DEFAULT_VOICE_LANGUAGE,
             ttsSpeed = prefs.getFloat(KEY_TTS_SPEED, JarvisSettings.DEFAULT_TTS_SPEED),
@@ -70,16 +75,24 @@ class SettingsRepository(context: Context) {
      */
     fun saveSettings(settings: JarvisSettings) {
         try {
-            SecureStorage.saveApiKey(settings.aiApiKey)
+            if (settings.aiApiKey.isNotBlank()) {
+                val keyType = if (settings.aiProviderName.contains("openai", ignoreCase = true)) "openai" else "gemini"
+                SecureStorage.saveApiKey(settings.aiApiKey, keyType)
+            }
         } catch (_: Throwable) {
             // SecureStorage may not be initialized in test environments
         }
 
         prefs.edit()
             .putBoolean(KEY_IS_SETUP_COMPLETE, settings.isSetupComplete)
+            .putString(KEY_USER_NAME, settings.userName)
+            .putString(KEY_FULL_NAME, settings.fullName)
+            .putString(KEY_ASSISTANT_NAME, settings.assistantName)
             .putString(KEY_AI_PROVIDER_NAME, settings.aiProviderName)
             .putString(KEY_AI_API_KEY, settings.aiApiKey)
             .putString(KEY_AI_MODEL_NAME, settings.aiModelName)
+            .putString(KEY_OPENAI_API_KEY, settings.openAiApiKey)
+            .putString(KEY_SELECTED_VOICE, settings.selectedVoice)
             .putString(KEY_VOICE_LANGUAGE, settings.voiceLanguage)
             .putFloat(KEY_TTS_SPEED, settings.ttsSpeed)
             .putBoolean(KEY_TTS_ENABLED, settings.ttsEnabled)
@@ -155,9 +168,14 @@ class SettingsRepository(context: Context) {
         const val PREFS_NAME = "jarvis_settings_prefs"
 
         const val KEY_IS_SETUP_COMPLETE = "is_setup_complete"
+        const val KEY_USER_NAME = "user_name"
+        const val KEY_FULL_NAME = "full_name"
+        const val KEY_ASSISTANT_NAME = "assistant_name"
         const val KEY_AI_PROVIDER_NAME = "ai_provider_name"
         const val KEY_AI_API_KEY = "ai_api_key"
         const val KEY_AI_MODEL_NAME = "ai_model_name"
+        const val KEY_OPENAI_API_KEY = "openai_api_key"
+        const val KEY_SELECTED_VOICE = "selected_voice"
         const val KEY_VOICE_LANGUAGE = "voice_language"
         const val KEY_TTS_SPEED = "tts_speed"
         const val KEY_TTS_ENABLED = "tts_enabled"

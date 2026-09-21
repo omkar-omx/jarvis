@@ -17,6 +17,7 @@ object SecureStorage {
     private const val TAG = "SecureStorage"
     private const val SECURE_PREFS_FILE = "jarvis_secure_prefs"
     private const val KEY_API_KEY_GEMINI = "jarvis_gemini_api_key"
+    private const val KEY_API_KEY_OPENAI = "jarvis_openai_api_key"
     private const val KEY_API_KEY_TAVILY = "jarvis_tavily_api_key"
     private const val KEY_API_KEY_WEATHER = "jarvis_weather_api_key"
     @Volatile
@@ -71,7 +72,8 @@ object SecureStorage {
      * Stores the AI provider API key securely in encrypted storage.
      */
     fun saveApiKey(key: String, type: String = "gemini") {
-        val storageKey = when(type) {
+        val storageKey = when(type.lowercase()) {
+            "openai", "chatgpt" -> KEY_API_KEY_OPENAI
             "tavily" -> KEY_API_KEY_TAVILY
             "weather" -> KEY_API_KEY_WEATHER
             else -> KEY_API_KEY_GEMINI
@@ -83,7 +85,8 @@ object SecureStorage {
      * Retrieves the stored AI provider API key, or null if none is saved.
      */
     fun getApiKey(type: String = "gemini"): String? {
-        val storageKey = when(type) {
+        val storageKey = when(type.lowercase()) {
+            "openai", "chatgpt" -> KEY_API_KEY_OPENAI
             "tavily" -> KEY_API_KEY_TAVILY
             "weather" -> KEY_API_KEY_WEATHER
             else -> KEY_API_KEY_GEMINI
@@ -95,7 +98,8 @@ object SecureStorage {
      * Removes the stored AI provider API key.
      */
     fun clearApiKey(type: String = "gemini") {
-        val storageKey = when(type) {
+        val storageKey = when(type.lowercase()) {
+            "openai", "chatgpt" -> KEY_API_KEY_OPENAI
             "tavily" -> KEY_API_KEY_TAVILY
             "weather" -> KEY_API_KEY_WEATHER
             else -> KEY_API_KEY_GEMINI

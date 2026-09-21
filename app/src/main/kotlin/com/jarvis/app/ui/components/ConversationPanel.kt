@@ -116,7 +116,13 @@ fun DialogueMessageBubble(
                 }
                 Text(
                     text = when {
-                        isUser -> "OPERATOR // OMKAR"
+                        isUser -> {
+                            val name = try {
+                                val s = com.jarvis.app.JarvisApplication.settingsRepository.settingsFlow.value
+                                s.fullName.ifBlank { s.userName.ifBlank { "OMKAR" } }.uppercase()
+                            } catch (_: Exception) { "OMKAR" }
+                            "OPERATOR // $name"
+                        }
                         isSystem -> "SYS // BROADCAST"
                         else -> "J.A.R.V.I.S. // NEURAL CORE"
                     },

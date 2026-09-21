@@ -42,13 +42,17 @@ class JarvisApplication : Application() {
         // 6. Initialize BrainManager if setup is complete
         val settings = settingsRepository.settingsFlow.value
         val aiKey = if (settings.aiApiKey.isNotBlank()) settings.aiApiKey
-                    else SecureStorage.getApiKey("gemini") ?: ""
+                    else SecureStorage.getApiKey("openai") ?: SecureStorage.getApiKey("gemini") ?: ""
         if (aiKey.isNotBlank()) {
+            val provName = if (settings.aiProviderName.isNotBlank() && settings.aiProviderName != "none")
+                settings.aiProviderName
+            else if (aiKey.startsWith("sk-")) "OpenAI" else "Gemini"
+
             com.jarvis.app.brain.BrainManager.configureProvider(
                 com.jarvis.app.brain.AIProviderConfig(
-                    providerName = settings.aiProviderName.ifBlank { "Gemini" },
+                    providerName = provName,
                     apiKey = aiKey,
-                    modelName = settings.aiModelName.ifBlank { "gemini-1.5-flash" }
+                    modelName = settings.aiModelName.ifBlank { if (provName.contains("openai", true)) "gpt-4o-mini" else "gemini-1.5-flash" }
                 )
             )
         }

@@ -169,6 +169,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        val settings = JarvisApplication.settingsRepository.settingsFlow.value
+        if (settings.isSetupComplete || settings.aiApiKey.isNotBlank()) {
+            try {
+                com.jarvis.app.voice.WakeWordService.start(this)
+            } catch (_: Exception) {}
+        }
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     /**

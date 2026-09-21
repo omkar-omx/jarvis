@@ -29,9 +29,14 @@ class HomeViewModel : ViewModel() {
     val agentState: StateFlow<AgentState> = _agentState.asStateFlow()
 
     private val _messages = MutableStateFlow<List<Pair<String, String>>>(
-        listOf(
-            "jarvis" to "Good day, sir. All core protocols initialized. Ready for your command."
-        )
+        run {
+            val settings = com.jarvis.app.JarvisApplication.settingsRepository.settingsFlow.value
+            val name = settings.fullName.ifBlank { settings.userName.ifBlank { "sir" } }
+            val aName = settings.assistantName.ifBlank { "JARVIS" }
+            listOf(
+                "jarvis" to "Good day, $name. All $aName core protocols online. Ready for your command."
+            )
+        }
     )
     val messages: StateFlow<List<Pair<String, String>>> = _messages.asStateFlow()
 

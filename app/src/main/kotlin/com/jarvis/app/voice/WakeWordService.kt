@@ -77,7 +77,24 @@ class WakeWordService : Service() {
                 stopSelf()
             }
             else -> {
-                startForeground(NOTIFICATION_ID, buildNotification())
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        startForeground(
+                            NOTIFICATION_ID,
+                            buildNotification(),
+                            android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                        )
+                    } else {
+                        startForeground(NOTIFICATION_ID, buildNotification())
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "startForeground with microphone type failed, falling back", e)
+                    try {
+                        startForeground(NOTIFICATION_ID, buildNotification())
+                    } catch (ex: Exception) {
+                        Log.e(TAG, "startForeground fallback failed", ex)
+                    }
+                }
                 startListeningLoop()
             }
         }

@@ -28,18 +28,25 @@ object BrainManager : AIProvider {
      * If valid, updates provider and status. Returns true on success.
      */
     fun configureProvider(config: AIProviderConfig): Boolean {
-        return if (config.isValid) {
-            currentConfig = config
-            _activeProvider = when(config.providerName.lowercase()) {
-                "gemini" -> GeminiProvider(config.apiKey)
-                else -> LocalFallbackProvider()
-            }
-            _isAIConfigured.value = true
-            true
-        } else {
+        val key = config.apiKey.trim()
+        if (key.isBlank()) {
             resetToFallback()
-            false
+            return false
         }
+        currentConfig = config.copy(apiKey = key)
+
+        val prov = config.providerName.lowercase().trim()
+        val isOpenAI = prov.contains("openai") || prov.contains("chatgpt") || prov.contains("gpt") || key.startsWith("sk-")
+
+        _activeProvider = if (isOpenAI) {
+            val model = config.modelName.ifBlank { "gpt-4o-mini" }
+            OpenAIProvider(key, model)
+        } else {
+            val model = config.modelName.ifBlank { "gemini-1.5-flash" }
+            GeminiProvider(key, model)
+        }
+        _isAIConfigured.value = true
+        return true
     }
 
     /**
