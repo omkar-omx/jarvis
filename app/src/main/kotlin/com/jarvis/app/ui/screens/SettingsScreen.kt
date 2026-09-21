@@ -33,9 +33,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.jarvis.app.JarvisApplication
 import com.jarvis.app.accessibility.AccessibilityBridge
+import com.jarvis.app.memory.entities.MemoryEntity
 import com.jarvis.app.ui.theme.*
+import kotlinx.coroutines.launch
 
 class SettingsViewModel : ViewModel() {
     var geminiKey by mutableStateOf(JarvisApplication.secureStorage.getApiKey("gemini") ?: "")
@@ -52,6 +55,62 @@ class SettingsViewModel : ViewModel() {
     var unlockPin by mutableStateOf(com.jarvis.app.auth.LockscreenUnlocker.getUnlockPin() ?: "")
 
     var isSavedToastVisible by mutableStateOf(false)
+
+    // Memory Vault states
+    var memoriesList by mutableStateOf<List<MemoryEntity>>(emptyList())
+    var memorySearchQuery by mutableStateOf("")
+    var newMemoryInput by mutableStateOf("")
+
+    init {
+        loadMemories()
+    }
+
+    fun loadMemories() {
+        viewModelScope.launch {
+            try {
+                memoriesList = JarvisApplication.memoryRepository.getAllMemories()
+            } catch (e: Exception) {
+                memoriesList = emptyList()
+            }
+        }
+    }
+
+    fun deleteMemory(id: Long) {
+        viewModelScope.launch {
+            try {
+                JarvisApplication.memoryRepository.forget(id)
+                loadMemories()
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun clearAllMemories() {
+        viewModelScope.launch {
+            try {
+                JarvisApplication.memoryRepository.clearAllMemories()
+                memoriesList = emptyList()
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun addManualMemory() {
+        val text = newMemoryInput.trim()
+        if (text.isBlank()) return
+        viewModelScope.launch {
+            try {
+                val category = if (text.contains("dost", ignoreCase = true) ||
+                    text.contains("friend", ignoreCase = true) ||
+                    text.contains("bhai", ignoreCase = true) ||
+                    text.contains("papa", ignoreCase = true) ||
+                    text.contains("number", ignoreCase = true)
+                ) "relationship" else "user_preference"
+
+                JarvisApplication.memoryRepository.remember(text, category = category, importance = 8)
+                newMemoryInput = ""
+                loadMemories()
+            } catch (_: Exception) {}
+        }
+    }
 
     fun saveAll() {
         if (geminiKey.isNotBlank()) JarvisApplication.secureStorage.saveApiKey(geminiKey.trim(), "gemini")
@@ -102,6 +161,10 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         }
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
+    }
+
+    LaunchedEffect(refreshTick) {
+        viewModel.loadMemories()
     }
 
     // Live permission states — re-evaluated whenever refreshTick changes
@@ -365,6 +428,187 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 onValueChange = { viewModel.unlockPin = it },
                 placeholder = "Enter device PIN (e.g. 1234)"
             )
+        }
+
+        // Section 5: Neural Memory Vault (Engrams)
+        OmxConfigSection(title = "NEURAL MEMORY VAULT (ENGRAMS)", icon = Icons.Default.Memory) {
+            Text(
+                text = "Autonomous persistent memory storage. J.A.R.V.I.S. stores facts, contact relationships, and preferences learned from conversations here.",
+                color = TextSecondary,
+                fontSize = 10.5.sp,
+                lineHeight = 14.sp
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Engram count badge & Purge All button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "VAULT: ${viewModel.memoriesList.size} STORED ENGRAMS",
+                    color = ArcCyan,
+                    fontSize = 10.sp,
+                    fontFamily = HudMonospace,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (viewModel.memoriesList.isNotEmpty()) {
+                    Button(
+                        onClick = { viewModel.clearAllMemories() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0x33FF1E44),
+                            contentColor = CyberCrimson
+                        ),
+                        shape = RoundedCornerShape(6.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier.height(26.dp)
+                    ) {
+                        Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "PURGE ALL",
+                            fontSize = 8.5.sp,
+                            fontFamily = HudMonospace,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Add new memory manual input
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = viewModel.newMemoryInput,
+                    onValueChange = { viewModel.newMemoryInput = it },
+                    placeholder = {
+                        Text(
+                            "e.g. Mere dost ka naam Aman hai...",
+                            color = TextMuted,
+                            fontSize = 11.sp,
+                            fontFamily = HudMonospace
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ArcCyan,
+                        unfocusedBorderColor = Color(0x3300F0FF),
+                        focusedContainerColor = Color(0x66060D1A),
+                        unfocusedContainerColor = Color(0x66060D1A),
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = { viewModel.addManualMemory() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0x3300F0FF),
+                        contentColor = ArcCyan
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(
+                        text = "STORE",
+                        fontSize = 10.sp,
+                        fontFamily = HudMonospace,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Display memories or empty state
+            if (viewModel.memoriesList.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0x33060E1C))
+                        .border(1.dp, Color(0x2200F0FF), RoundedCornerShape(8.dp))
+                        .padding(14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = TextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "No neural engrams stored yet.",
+                            color = TextPrimary,
+                            fontSize = 11.sp,
+                            fontFamily = HudMonospace,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Tell JARVIS: \"Remember that...\" or \"Yaad rakhna mera dost Aman hai\"",
+                            color = TextMuted,
+                            fontSize = 9.5.sp,
+                            fontFamily = HudMonospace
+                        )
+                    }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    viewModel.memoriesList.take(20).forEach { mem ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x4D060D1A))
+                                .border(1.dp, Color(0x2600F0FF), RoundedCornerShape(6.dp))
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = mem.content,
+                                    color = TextPrimary,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "CATEGORY: ${mem.category.uppercase()}",
+                                    color = ArcCyan,
+                                    fontSize = 8.5.sp,
+                                    fontFamily = HudMonospace
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel.deleteMemory(mem.id) },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Delete",
+                                    tint = CyberCrimson,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Save Button

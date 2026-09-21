@@ -94,25 +94,6 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                                 NavigationBarItem(
-                                    icon = { Icon(Icons.Default.Memory, contentDescription = "Engrams") },
-                                    label = { Text("ENGRAMS", fontFamily = HudMonospace, fontSize = 10.sp) },
-                                    selected = currentRoute == "memory",
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = ArcCyan,
-                                        selectedTextColor = ArcCyan,
-                                        indicatorColor = Color(0x3300F0FF),
-                                        unselectedIconColor = TextMuted,
-                                        unselectedTextColor = TextMuted
-                                    ),
-                                    onClick = {
-                                        navController.navigate("memory") {
-                                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                    }
-                                )
-                                NavigationBarItem(
                                     icon = { Icon(Icons.Default.Tune, contentDescription = "Protocols") },
                                     label = { Text("PROTOCOLS", fontFamily = HudMonospace, fontSize = 10.sp) },
                                     selected = currentRoute == "settings",

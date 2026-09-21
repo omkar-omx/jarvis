@@ -109,6 +109,11 @@ object DeviceActionDispatcher {
             )
         }
 
+        // 4.5. Smart WhatsApp Auto-Messaging & Contact Navigation (Memory Nickname Resolution & Autonomous Send)
+        if (WhatsAppNavigator.isWhatsAppMessagingCommand(rawCommand)) {
+            return WhatsAppNavigator.dispatch(rawCommand, context)
+        }
+
         // 5. Native App Launching (Requires NO Accessibility Permission — 100% Native Intent)
         val isAppCommand = cmd.startsWith("open ") || cmd.startsWith("launch ") || cmd.startsWith("start ") ||
                 cmd.startsWith("play ") || cmd.contains(" kholo") || cmd.contains(" chalao") ||

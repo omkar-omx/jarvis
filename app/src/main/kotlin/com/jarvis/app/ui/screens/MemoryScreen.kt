@@ -23,13 +23,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.jarvis.app.JarvisApplication
 import com.jarvis.app.ui.theme.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class MemoryItem(
-    val id: String,
+    val id: Long,
     val content: String,
     val category: String,
     val importance: Int,
@@ -37,25 +40,70 @@ data class MemoryItem(
 )
 
 class MemoryViewModel : ViewModel() {
-    private val _memories = MutableStateFlow<List<MemoryItem>>(
-        listOf(
-            MemoryItem("1", "User prefers holographic dark HUD interface.", "Preference", 9, "2026-09-20"),
-            MemoryItem("2", "Security Protocol: Biometric owner authorization required for financial transactions.", "Protocol", 10, "2026-09-21"),
-            MemoryItem("3", "Primary AI Reasoning Engine linked to Google Gemini Core.", "Architecture", 8, "2026-09-21"),
-            MemoryItem("4", "Voice interface trained for English, Hindi, and Hinglish syntax.", "Voice Core", 8, "2026-09-21")
-        )
-    )
+    private val _memories = MutableStateFlow<List<MemoryItem>>(emptyList())
     val memories: StateFlow<List<MemoryItem>> = _memories.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    init {
+        loadMemories()
+    }
+
+    fun loadMemories() {
+        viewModelScope.launch {
+            try {
+                val list = JarvisApplication.memoryRepository.getAllMemories()
+                val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                _memories.value = list.map { entity ->
+                    MemoryItem(
+                        id = entity.id,
+                        content = entity.content,
+                        category = entity.category,
+                        importance = entity.importance,
+                        date = dateFormat.format(java.util.Date(entity.createdAt))
+                    )
+                }
+            } catch (e: Exception) {
+                _memories.value = emptyList()
+            }
+        }
+    }
+
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
     }
 
-    fun deleteMemory(id: String) {
-        _memories.value = _memories.value.filter { it.id != id }
+    fun deleteMemory(id: Long) {
+        viewModelScope.launch {
+            try {
+                JarvisApplication.memoryRepository.forget(id)
+                loadMemories()
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun clearAllMemories() {
+        viewModelScope.launch {
+            try {
+                JarvisApplication.memoryRepository.clearAllMemories()
+                _memories.value = emptyList()
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun addMemory(content: String, category: String = "general") {
+        if (content.isBlank()) return
+        viewModelScope.launch {
+            try {
+                JarvisApplication.memoryRepository.remember(
+                    content = content.trim(),
+                    category = category,
+                    importance = 8
+                )
+                loadMemories()
+            } catch (_: Exception) {}
+        }
     }
 }
 

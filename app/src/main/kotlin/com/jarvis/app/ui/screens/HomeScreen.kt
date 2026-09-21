@@ -61,19 +61,43 @@ class HomeViewModel : ViewModel() {
                     finalResponse = dispatchResult.feedback
                 }
 
-                // 2. Memory Storage ("Remember that...", "Yaad rakhna...")
+                // 2. Memory Storage ("Remember that...", "Yaad rakhna...", "...yaad rakhna")
                 if (finalResponse.isBlank()) {
                     val lower = command.lowercase().trim()
-                    if (lower.startsWith("remember that ") || lower.startsWith("remember ") || lower.startsWith("yaad rakhna ki ") || lower.startsWith("yaad rakh ")) {
+                    val isRememberCommand = lower.startsWith("remember that ") ||
+                            lower.startsWith("remember ") ||
+                            lower.startsWith("yaad rakhna ") ||
+                            lower.startsWith("yaad rakh ") ||
+                            lower.endsWith(" yaad rakhna") ||
+                            lower.endsWith(" yaad rakh") ||
+                            lower.contains("ye yaad rakh") ||
+                            lower.contains("yeh yaad rakh")
+
+                    if (isRememberCommand) {
                         val fact = command
                             .replace("remember that ", "", ignoreCase = true)
                             .replace("remember ", "", ignoreCase = true)
                             .replace("yaad rakhna ki ", "", ignoreCase = true)
+                            .replace("yaad rakhna ", "", ignoreCase = true)
+                            .replace("yaad rakh ki ", "", ignoreCase = true)
                             .replace("yaad rakh ", "", ignoreCase = true)
+                            .replace(" yeh yaad rakhna", "", ignoreCase = true)
+                            .replace(" ye yaad rakhna", "", ignoreCase = true)
+                            .replace(" yaad rakhna", "", ignoreCase = true)
+                            .replace(" yaad rakh", "", ignoreCase = true)
                             .trim()
+
+                        val category = if (fact.contains("dost", ignoreCase = true) ||
+                            fact.contains("friend", ignoreCase = true) ||
+                            fact.contains("bhai", ignoreCase = true) ||
+                            fact.contains("brother", ignoreCase = true) ||
+                            fact.contains("papa", ignoreCase = true) ||
+                            fact.contains("number", ignoreCase = true)
+                        ) "relationship" else "user_preference"
+
                         com.jarvis.app.JarvisApplication.memoryRepository.remember(
                             content = fact,
-                            category = "user_preference",
+                            category = category,
                             importance = 8
                         )
                         finalResponse = "Engram stored in OmX Neural Vault: \"$fact\". I will remember this, sir."
