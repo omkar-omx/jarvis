@@ -34,6 +34,15 @@ object DeviceActionDispatcher {
     suspend fun tryDispatch(rawCommand: String, context: Context): DispatchResult? {
         val cmd = rawCommand.lowercase().trim()
 
+        // 0. Teach Workflow Protocol ("Sikho...", "Learn workflow...")
+        if (com.jarvis.app.agent.WorkflowLearningEngine.isTeachCommand(rawCommand)) {
+            return com.jarvis.app.agent.WorkflowLearningEngine.teachWorkflow(rawCommand)
+        }
+
+        // 0.5. Execute Learned Workflow Protocol (Autonomous Macro Replay for any app/website)
+        val learnedResult = com.jarvis.app.agent.WorkflowLearningEngine.tryExecuteLearnedWorkflow(rawCommand, context)
+        if (learnedResult != null) return learnedResult
+
         // 1. Flashlight / Torch Control
         if (cmd.contains("flashlight on") || cmd.contains("torch on") ||
             cmd.contains("torch jalao") || cmd.contains("light on") || cmd.contains("turn on flash")
