@@ -93,6 +93,7 @@ fun WelcomeScreen(onSetupComplete: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(bgGradient)
+            .statusBarsPadding()
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp)

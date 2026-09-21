@@ -49,7 +49,7 @@ fun TelemetryHeader(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 14.dp, vertical = 6.dp)
+            .padding(horizontal = 14.dp, vertical = 2.dp)
     ) {
         // Top Banner: Title & Protocol Status
         Row(

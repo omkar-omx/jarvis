@@ -214,6 +214,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(bgGradient)
+            .statusBarsPadding()
             .verticalScroll(scrollState)
             .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)

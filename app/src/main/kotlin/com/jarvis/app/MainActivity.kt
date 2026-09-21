@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
                 val startDestination = if (isSetupComplete) "home" else "welcome"
 
                 Scaffold(
+                    contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                     bottomBar = {
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
                         val currentRoute = navBackStackEntry?.destination?.route
@@ -121,7 +122,7 @@ class MainActivity : ComponentActivity() {
                         startDestination = startDestination,
                         modifier = Modifier
                             .background(VoidBlack)
-                            .padding(innerPadding)
+                            .padding(bottom = innerPadding.calculateBottomPadding())
                     ) {
                         composable("welcome") {
                             WelcomeScreen(
