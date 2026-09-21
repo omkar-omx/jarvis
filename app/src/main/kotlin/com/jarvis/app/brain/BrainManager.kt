@@ -42,7 +42,7 @@ object BrainManager : AIProvider {
             val model = config.modelName.ifBlank { "gpt-4o-mini" }
             OpenAIProvider(key, model)
         } else {
-            val model = config.modelName.ifBlank { "gemini-1.5-flash" }
+            val model = GeminiProvider.sanitizeModel(config.modelName.ifBlank { "gemini-1.5-flash" })
             GeminiProvider(key, model)
         }
         _isAIConfigured.value = true

@@ -109,8 +109,12 @@ object DeviceActionDispatcher {
             )
         }
 
-        // 5. Native App Launching
-        if (cmd.startsWith("open ") || cmd.startsWith("launch ") || cmd.contains(" kholo") || cmd.contains(" chalao")) {
+        // 5. Native App Launching (Requires NO Accessibility Permission — 100% Native Intent)
+        val isAppCommand = cmd.startsWith("open ") || cmd.startsWith("launch ") || cmd.startsWith("start ") ||
+                cmd.startsWith("play ") || cmd.contains(" kholo") || cmd.contains(" chalao") ||
+                cmd.contains(" open karo") || cmd.contains(" on karo") || cmd.contains(" chala do") ||
+                cmd.startsWith("kholo ") || cmd.startsWith("chalao ")
+        if (isAppCommand) {
             val appTarget = extractAppName(cmd)
             if (appTarget.isNotBlank()) {
                 val launched = launchApp(context, appTarget)
@@ -125,11 +129,19 @@ object DeviceActionDispatcher {
 
     private fun extractAppName(cmd: String): String {
         var clean = cmd
+            .replace("open karo", "")
+            .replace("on karo", "")
+            .replace("chala do", "")
             .replace("open ", "")
             .replace("launch ", "")
+            .replace("start ", "")
+            .replace("play ", "")
+            .replace("kholo ", "")
+            .replace("chalao ", "")
             .replace(" kholo", "")
             .replace(" chalao", "")
             .replace(" please", "")
+            .replace(" app", "")
             .trim()
         if (clean.startsWith("the ")) clean = clean.removePrefix("the ").trim()
         return clean
@@ -137,11 +149,11 @@ object DeviceActionDispatcher {
 
     private fun launchApp(context: Context, appName: String): Boolean {
         return try {
-            // Known popular packages
+            // Known popular packages (Instant launch without scanning)
             val targetPkg = when (appName) {
-                "youtube" -> "com.google.android.youtube"
-                "whatsapp" -> "com.whatsapp"
-                "chrome", "browser", "internet" -> "com.android.chrome"
+                "youtube", "yt" -> "com.google.android.youtube"
+                "whatsapp", "wa" -> "com.whatsapp"
+                "chrome", "browser", "internet", "google" -> "com.android.chrome"
                 "camera", "photo" -> {
                     val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(intent)

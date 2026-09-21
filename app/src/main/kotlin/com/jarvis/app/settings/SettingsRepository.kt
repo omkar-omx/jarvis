@@ -49,7 +49,10 @@ class SettingsRepository(context: Context) {
             aiProviderName = prefs.getString(KEY_AI_PROVIDER_NAME, JarvisSettings.DEFAULT_AI_PROVIDER)
                 ?: JarvisSettings.DEFAULT_AI_PROVIDER,
             aiApiKey = apiKey,
-            aiModelName = prefs.getString(KEY_AI_MODEL_NAME, "") ?: "",
+            aiModelName = run {
+                val raw = prefs.getString(KEY_AI_MODEL_NAME, "gemini-1.5-flash") ?: "gemini-1.5-flash"
+                if (raw.contains("2.5") || raw.isBlank()) "gemini-1.5-flash" else raw
+            },
             openAiApiKey = prefs.getString(KEY_OPENAI_API_KEY, "") ?: "",
             selectedVoice = prefs.getString(KEY_SELECTED_VOICE, "en-IN-Wavenet-C") ?: "en-IN-Wavenet-C",
             voiceLanguage = prefs.getString(KEY_VOICE_LANGUAGE, JarvisSettings.DEFAULT_VOICE_LANGUAGE)

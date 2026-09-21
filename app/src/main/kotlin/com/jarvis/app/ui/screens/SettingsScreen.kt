@@ -201,13 +201,32 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         OmxConfigSection(title = "PERMISSIONS & AUTOMATION BUS", icon = Icons.Default.SettingsSuggest) {
             OmxPermissionRow(
                 title = "Accessibility Automation",
-                subtitle = "Enables automatic UI clicks, swipes & PIN unlock",
+                subtitle = "Enables automatic UI clicks, swipes & PIN unlock (Apps open even without this)",
                 isGranted = isAccessibilityOnline,
                 onActivate = {
                     val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(intent)
                 }
             )
+            if (!isAccessibilityOnline && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0x22FFB703))
+                        .border(1.dp, Color(0x66FFB703), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "💡 Tip: Agar phone 'Restricted Setting' bole: Phone Settings -> Apps -> JARVIS -> Upar 3 dots menu -> 'Allow restricted settings' karein.",
+                        color = OmxGold,
+                        fontSize = 9.5.sp,
+                        fontFamily = HudMonospace,
+                        lineHeight = 13.sp
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             OmxPermissionRow(
                 title = "Display Over Other Apps",
