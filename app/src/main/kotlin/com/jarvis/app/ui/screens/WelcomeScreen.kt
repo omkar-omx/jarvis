@@ -175,6 +175,20 @@ fun WelcomeScreen(onSetupComplete: () -> Unit) {
                             )
                         )
 
+                        // Immediately boot the AI core so it's ready without restart
+                        com.jarvis.app.brain.BrainManager.configureProvider(
+                            com.jarvis.app.brain.AIProviderConfig(
+                                providerName = "Gemini",
+                                apiKey = geminiKey.trim(),
+                                modelName = "gemini-1.5-flash"
+                            )
+                        )
+
+                        // Start Hey JARVIS wake word listener immediately
+                        try {
+                            com.jarvis.app.voice.WakeWordService.start(JarvisApplication.instance)
+                        } catch (_: Exception) {}
+
                         onSetupComplete()
                     } else {
                         showError = true

@@ -1,8 +1,15 @@
 package com.jarvis.app
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.padding
@@ -17,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,20 +34,37 @@ import com.jarvis.app.ui.screens.*
 import com.jarvis.app.ui.theme.*
 
 class MainActivity : ComponentActivity() {
+
+    // ─── Permission Launcher ────────────────────────────────────────────────
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
+        // After runtime permissions are answered, check overlay permission
+        checkAndRequestOverlay()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
+        // Make the app draw edge-to-edge (fixes title shifting down)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Request runtime permissions on first launch
+        requestEssentialPermissions()
+
         setContent {
             JarvisTheme {
                 val navController = rememberNavController()
-                val isSetupComplete = JarvisApplication.settingsRepository.settingsFlow.collectAsState(initial = JarvisApplication.settingsRepository.loadSettings()).value.isSetupComplete
+                val isSetupComplete = JarvisApplication.settingsRepository.settingsFlow
+                    .collectAsState(initial = JarvisApplication.settingsRepository.loadSettings())
+                    .value.isSetupComplete
                 val startDestination = if (isSetupComplete) "home" else "welcome"
-                
+
                 Scaffold(
                     bottomBar = {
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
                         val currentRoute = navBackStackEntry?.destination?.route
-                        
+
                         if (currentRoute != "welcome") {
                             NavigationBar(
                                 containerColor = VoidBlack,
@@ -127,20 +152,67 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("home") {
-                            val viewModel: HomeViewModel = viewModel()
-                            HomeScreen(viewModel = viewModel)
+                            val homeViewModel: HomeViewModel = viewModel()
+                            HomeScreen(viewModel = homeViewModel)
                         }
                         composable("memory") {
-                            val viewModel: MemoryViewModel = viewModel()
-                            MemoryScreen(viewModel = viewModel)
+                            val memoryViewModel: MemoryViewModel = viewModel()
+                            MemoryScreen(viewModel = memoryViewModel)
                         }
                         composable("settings") {
-                            val viewModel: SettingsViewModel = viewModel()
-                            SettingsScreen(viewModel = viewModel)
+                            val settingsViewModel: SettingsViewModel = viewModel()
+                            SettingsScreen(viewModel = settingsViewModel)
                         }
                     }
                 }
             }
+        }
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    /**
+     * Requests RECORD_AUDIO, CAMERA, and POST_NOTIFICATIONS at first launch.
+     * Works exactly like Google Assistant — asks upfront on first open.
+     */
+    private fun requestEssentialPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.CAMERA)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            permissionLauncher.launch(permissionsToRequest.toTypedArray())
+        } else {
+            // All permissions already granted — check overlay
+            checkAndRequestOverlay()
+        }
+    }
+
+    /**
+     * After mic/camera/notification permissions are resolved, check SYSTEM_ALERT_WINDOW
+     * (Overlay over other apps). Required for the floating JARVIS assistant bubble.
+     */
+    private fun checkAndRequestOverlay() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+            try {
+                startActivity(intent)
+            } catch (_: Exception) {}
         }
     }
 }

@@ -41,19 +41,21 @@ class JarvisApplication : Application() {
 
         // 6. Initialize BrainManager if setup is complete
         val settings = settingsRepository.settingsFlow.value
-        if (settings.isSetupComplete && settings.aiApiKey.isNotBlank()) {
+        val aiKey = if (settings.aiApiKey.isNotBlank()) settings.aiApiKey
+                    else SecureStorage.getApiKey("gemini") ?: ""
+        if (aiKey.isNotBlank()) {
             com.jarvis.app.brain.BrainManager.configureProvider(
                 com.jarvis.app.brain.AIProviderConfig(
-                    providerName = settings.aiProviderName,
-                    apiKey = settings.aiApiKey,
-                    modelName = settings.aiModelName
+                    providerName = settings.aiProviderName.ifBlank { "Gemini" },
+                    apiKey = aiKey,
+                    modelName = settings.aiModelName.ifBlank { "gemini-1.5-flash" }
                 )
             )
         }
 
         // 7. Initialize WakeWordService (Background "Hey Jarvis" audio listener)
         try {
-            if (settings.isSetupComplete) {
+            if (aiKey.isNotBlank() || settings.isSetupComplete) {
                 com.jarvis.app.voice.WakeWordService.start(this)
             }
         } catch (e: Exception) {
