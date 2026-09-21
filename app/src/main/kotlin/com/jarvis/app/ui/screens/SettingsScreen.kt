@@ -92,7 +92,7 @@ class SettingsViewModel : ViewModel() {
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
 
     // ── Live-refresh tick on every RESUME (user comes back from settings) ──
     var refreshTick by remember { mutableStateOf(0) }
